@@ -223,19 +223,6 @@ func (p *Parser) fndecl_args() (args []Expr) {
         }
     }
 
-    first := true
-    for op := p.peek(); op.Kind == TokenIdent; op = p.peek() {
-        p.next()
-
-        if first {
-            args = append(args, expr_ident(op))
-            first = false
-        } else {
-            p.expect(TokenComma)
-            args = append(args, expr_ident(op))
-        }
-    }
-
     p.expect(TokenRightBracket)
     return
 }
