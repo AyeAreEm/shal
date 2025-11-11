@@ -14,6 +14,7 @@ func main() {
         Show: false,
         Err: nil,
         Assigns: make(map[string]float64),
+        FnDecls: make(map[string]FnDecl),
     }
 
     for true {
@@ -24,7 +25,9 @@ func main() {
         stmnt := Parse(lexer.Tokens)
         state.Eval(stmnt)
 
-        if state.Show {
+        if state.Err != nil {
+            fmt.Println("error:", state.Err.Error())
+        } else if state.Show {
             fmt.Println(state.Val)
         }
     }

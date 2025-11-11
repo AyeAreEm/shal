@@ -58,6 +58,11 @@ func (expr ExUnary) Print() {
     }
 }
 
+type ExFnCall struct {
+    Ident string
+    Args  []Expr
+}
+
 type ExprKind int
 const (
     ExprNumlit ExprKind = iota
@@ -65,6 +70,7 @@ const (
     ExprUnary
     ExprIdent
     ExprGroup
+    ExprFnCall
 )
 
 type Expr struct {
@@ -83,6 +89,18 @@ func (expr Expr) Print() {
     case ExprUnary:
         e := expr.Val.(ExUnary)
         e.Print()
+    case ExprGroup:
+        e := expr.Val.(Expr)
+        fmt.Print("(")
+        e.Print()
+        fmt.Print(")")
+    case ExprIdent:
+        ident := expr.Val.(string)
+        fmt.Print(ident)
+    case ExprFnCall:
+        fncall := expr.Val.(ExFnCall)
+        fmt.Print(fncall.Ident)
+        fn_args_print(fncall.Args)
     }
 }
 
@@ -123,6 +141,7 @@ const (
     StmntClear
     StmntExit
     StmntAssign
+    StmntFnDecl
 )
 
 type Assign struct {
@@ -130,9 +149,28 @@ type Assign struct {
     Val   Expr
 }
 
+type FnDecl struct {
+    Ident string
+    Args  []Expr
+    Body  Expr
+}
+
 type Stmnt struct {
     Kind StmntKind
     Val  any
+}
+
+func fn_args_print(args []Expr) {
+    fmt.Print("(")
+    for i, arg := range args {
+        if i == 0 {
+            arg.Print()
+        } else {
+            fmt.Print(", ")
+            arg.Print()
+        }
+    }
+    fmt.Print(")")
 }
 
 func (s Stmnt) Print() {
@@ -145,6 +183,18 @@ func (s Stmnt) Print() {
         fmt.Println("Clear")
     case StmntExit:
         fmt.Println("Exit")
+    case StmntAssign:
+        assign := s.Val.(Assign)
+        fmt.Printf("let %v = ", assign.Ident)
+        assign.Val.Print()
+        fmt.Println()
+    case StmntFnDecl:
+        fndecl := s.Val.(FnDecl)
+        fmt.Printf("let %v", fndecl.Ident)
+        fn_args_print(fndecl.Args)
+        fmt.Print(" = ")
+        fndecl.Body.Print()
+        fmt.Println()
     }
 }
 func stmnt_clear() Stmnt {
@@ -157,11 +207,50 @@ func stmnt_exit() Stmnt {
         Kind: StmntExit,
     }
 }
+
+func (p *Parser) fndecl_args() (args []Expr) {
+    p.expect(TokenLeftBracket)
+
+    first := true
+    for op := p.peek(); op.Kind == TokenIdent; op = p.peek() {
+        p.next()
+
+        if first {
+            args = append(args, expr_ident(op))
+            first = false
+        } else {
+            p.expect(TokenComma)
+            args = append(args, expr_ident(op))
+        }
+    }
+
+    p.expect(TokenRightBracket)
+    return
+}
+
+func (p *Parser) fndecl(name Token) Stmnt {
+    args := p.fndecl_args()
+    p.expect(TokenEqual)
+    body := p.expr()
+
+    return Stmnt{
+        Kind: StmntFnDecl,
+        Val: FnDecl{
+            Ident: name.Val.(string),
+            Args: args,
+            Body: body,
+        },
+    }
+}
+
 func (p *Parser) assign() Stmnt {
     // remove `let`
     p.next()
 
     ident := p.expect(TokenIdent)
+    if p.peek().Kind == TokenLeftBracket {
+        return p.fndecl(ident)
+    }
     p.expect(TokenEqual)
     expr := p.expr()
 
@@ -229,8 +318,41 @@ func (p *Parser) primary() Expr {
     return Expr{}
 }
 
-func (p *Parser) fn_call() Expr {
+func (p *Parser) end_fncall(ident Expr) Expr {
+    tok := p.peek()
+
+    args := []Expr{}
+    if tok.Kind != TokenRightBracket {
+        args = append(args, p.expr())
+
+        for tok = p.peek(); tok.Kind == TokenComma; tok = p.peek() {
+            p.next()
+            args = append(args, p.expr())
+        }
+    }
+    p.expect(TokenRightBracket)
+
+    return Expr{
+        Kind: ExprFnCall,
+        Val: ExFnCall{
+            Ident: ident.Val.(string),
+            Args: args,
+        },
+    }
+}
+
+func (p *Parser) fncall() Expr {
     expr := p.primary()
+
+    for {
+        tok := p.peek()
+        if (tok.Kind == TokenLeftBracket) {
+            p.next()
+            expr = p.end_fncall(expr)
+        } else {
+            break
+        }
+    }
 
     return expr
 }
@@ -238,7 +360,7 @@ func (p *Parser) fn_call() Expr {
 func (p *Parser) unary() Expr {
     op := p.peek()
     if op.Kind != TokenMinus {
-        return p.fn_call()
+        return p.fncall()
     }
     p.next()
 

@@ -11,6 +11,7 @@ Why not use a repl like Python or Node? I primarily use NixOs and don't have lan
 - Division
 - Variables
 - Binary / Octal / Hexadecimal Numbers
+- Functions
 - `1_000_000` Syntax
 - `clear` (clear stdout)
 - `exit`  (exit)
@@ -19,7 +20,6 @@ Why not use a repl like Python or Node? I primarily use NixOs and don't have lan
 - Modulus
 - Builtin Constants (pi, e, ...)
 - Builtin Functions (sqrt, log, ...)
-- Functions
 
 ## Why not the Calc's that already exist?
 Well, I didn't know about them until after making this... Funny how one of them is also made in Go.<br>

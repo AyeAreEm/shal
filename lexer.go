@@ -25,6 +25,7 @@ const (
     TokenEqual
     TokenLeftBracket
     TokenRightBracket
+    TokenComma
 )
 
 type Token struct {
@@ -100,6 +101,11 @@ func token_right_bracket() Token {
         Kind: TokenRightBracket,
     }
 }
+func token_comma() Token {
+    return Token{
+        Kind: TokenComma,
+    }
+}
 
 type Lexer struct {
     buf strings.Builder
@@ -173,6 +179,8 @@ func Lex(line string) Lexer {
             lexer.resolve_and_push(token_left_bracket())
         case ')':
             lexer.resolve_and_push(token_right_bracket())
+        case ',':
+            lexer.resolve_and_push(token_comma())
         default:
             lexer.push_rune(ch)
         }

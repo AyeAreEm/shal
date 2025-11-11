@@ -8,9 +8,10 @@ import (
 
 type State struct {
     Val     float64
-    Show   bool
+    Show    bool
     Err     error
     Assigns map[string]float64
+    FnDecls map[string]FnDecl
 }
 
 func (state *State) binary(expr ExBinary) float64 {
@@ -46,6 +47,31 @@ func (state *State) unary(expr ExUnary) float64 {
     return 0
 }
 
+func (state *State) fncall(fncall ExFnCall) float64 {
+    fndecl, ok := state.FnDecls[fncall.Ident]
+    if !ok {
+        state.Err = errors.New("function declaration not found")
+        return 0
+    }
+    if len(fndecl.Args) != len(fncall.Args) {
+        state.Err = errors.New("function call and declaration have different arguments")
+        return 0
+    }
+
+    for i, darg := range fndecl.Args {
+        carg := fncall.Args[i]
+        state.Assigns[darg.Val.(string)] = state.expr(carg)
+    }
+
+    result := state.expr(fndecl.Body)
+
+    for _, darg := range fndecl.Args {
+        delete(state.Assigns, darg.Val.(string))
+    }
+
+    return result
+}
+
 func (state *State) expr(expr Expr) float64 {
     switch expr.Kind {
     case ExprNumlit:
@@ -57,6 +83,8 @@ func (state *State) expr(expr Expr) float64 {
             return 0
         }
         return val
+    case ExprFnCall:
+        return state.fncall(expr.Val.(ExFnCall))
     case ExprBinary:
         return state.binary(expr.Val.(ExBinary))
     case ExprUnary:
@@ -68,10 +96,15 @@ func (state *State) expr(expr Expr) float64 {
     return 0
 }
 
-func (state *State) assign(assign Assign) (string, float64) {
+func (state *State) assign(assign Assign) {
     ident := assign.Ident
     expr := state.expr(assign.Val)
-    return ident, expr
+    state.Assigns[ident] = expr
+}
+
+func (state *State) fndecl(fndecl FnDecl) {
+    ident := fndecl.Ident
+    state.FnDecls[ident] = fndecl
 }
 
 func (state *State) Eval(stmnt Stmnt) {
@@ -85,8 +118,10 @@ func (state *State) Eval(stmnt Stmnt) {
     case StmntExit:
         os.Exit(0)
     case StmntAssign:
-        ident, expr := state.assign(stmnt.Val.(Assign))
-        state.Assigns[ident] = expr
+        state.assign(stmnt.Val.(Assign))
+        state.Show = false
+    case StmntFnDecl:
+        state.fndecl(stmnt.Val.(FnDecl))
         state.Show = false
     }
 }
