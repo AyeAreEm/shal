@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var keywords = []string{"clear", "exit", "let"}
+var keywords = []string{"clear", "exit", "let", "ans"}
 
 type TokenKind int
 const (
@@ -21,6 +21,7 @@ const (
     TokenClear
     TokenExit
     TokenLet
+    TokenAns
     TokenIdent
     TokenEqual
     TokenLeftBracket
@@ -76,6 +77,8 @@ func token_keyword(keyword string) Token {
         return Token{Kind: TokenExit}
     case "let":
         return Token{Kind: TokenLet}
+    case "ans":
+        return Token{Kind: TokenAns}
     }
 
     return token_none()

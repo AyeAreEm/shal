@@ -10,7 +10,7 @@ func main() {
     reader := bufio.NewReader(os.Stdin)
 
     state := State{
-        Val: 0,
+        Ans: 0,
         Show: false,
         Err: nil,
         Assigns: make(map[string]float64),
@@ -28,7 +28,7 @@ func main() {
         if state.Err != nil {
             fmt.Println("error:", state.Err.Error())
         } else if state.Show {
-            fmt.Println(state.Val)
+            fmt.Println(state.Ans)
         }
     }
 }

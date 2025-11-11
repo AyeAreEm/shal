@@ -7,7 +7,7 @@ import (
 )
 
 type State struct {
-    Val     float64
+    Ans     float64
     Show    bool
     Err     error
     Assigns map[string]float64
@@ -83,6 +83,8 @@ func (state *State) expr(expr Expr) float64 {
             return 0
         }
         return val
+    case ExprAns:
+        return state.Ans
     case ExprFnCall:
         return state.fncall(expr.Val.(ExFnCall))
     case ExprBinary:
@@ -110,7 +112,7 @@ func (state *State) fndecl(fndecl FnDecl) {
 func (state *State) Eval(stmnt Stmnt) {
     switch stmnt.Kind {
     case StmntExprs:
-        state.Val = state.expr(stmnt.Val.(Expr))
+        state.Ans = state.expr(stmnt.Val.(Expr))
         state.Show = true
     case StmntClear:
         fmt.Print("\033[H\033[2J")

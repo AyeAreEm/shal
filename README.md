@@ -12,6 +12,7 @@ Why not use a repl like Python or Node? I primarily use NixOs and don't have lan
 - Variables
 - Binary / Octal / Hexadecimal Numbers
 - Functions
+- Global `ans` Variable (store the most recent answer as a variable)
 - `1_000_000` Syntax
 - `clear` (clear stdout)
 - `exit`  (exit)

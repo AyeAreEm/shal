@@ -69,6 +69,7 @@ const (
     ExprBinary
     ExprUnary
     ExprIdent
+    ExprAns
     ExprGroup
     ExprFnCall
 )
@@ -114,6 +115,11 @@ func expr_ident(ident Token) Expr {
     return Expr{
         Kind: ExprIdent,
         Val: ident.Val.(string),
+    }
+}
+func expr_ans() Expr {
+    return Expr{
+        Kind: ExprAns,
     }
 }
 func expr_binary(bin ExBinary) Expr {
@@ -304,6 +310,9 @@ func (p *Parser) primary() Expr {
     case TokenIdent:
         p.next()
         return expr_ident(tok)
+    case TokenAns:
+        p.next()
+        return expr_ans()
     case TokenLeftBracket:
         p.next()
         expr := p.expr()
@@ -452,6 +461,8 @@ func Parse(toks []Token) Stmnt {
         return stmnt_exit()
     case TokenLet:
         return parser.assign()
+    case TokenAns:
+        fallthrough
     case TokenIdent:
         fallthrough
     case TokenNumlit:
