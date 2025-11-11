@@ -210,6 +210,18 @@ func stmnt_exit() Stmnt {
 
 func (p *Parser) fndecl_args() (args []Expr) {
     p.expect(TokenLeftBracket)
+    tok := p.peek()
+
+    if tok.Kind != TokenRightBracket {
+        p.expect(TokenIdent)
+        args = append(args, expr_ident(tok))
+
+        for tok = p.peek(); tok.Kind == TokenComma; tok = p.peek() {
+            p.next()
+            ident := p.expect(TokenIdent)
+            args = append(args, expr_ident(ident))
+        }
+    }
 
     first := true
     for op := p.peek(); op.Kind == TokenIdent; op = p.peek() {
